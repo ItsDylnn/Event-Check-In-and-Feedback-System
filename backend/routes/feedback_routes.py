@@ -1,15 +1,17 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from models import Feedback
 
 feedback_bp = Blueprint('feedback', __name__)
 
-
 @feedback_bp.route('', methods=['GET'])
 @jwt_required()
 def get_feedback():
-    user = get_jwt_identity()
-    if user['role'] != 'admin':
+    user_id = get_jwt_identity()  # ✅ this is now just the user ID (string)
+    claims = get_jwt()            # ✅ this holds role, name, etc.
+
+    # ✅ Only admins can view feedback
+    if claims.get('role') != 'admin':
         return jsonify({'msg': 'Admin only'}), 403
 
     feedbacks = Feedback.query.all()
@@ -23,4 +25,4 @@ def get_feedback():
         }
         for f in feedbacks
     ]
-    return jsonify(data)
+    return jsonify(data), 200
