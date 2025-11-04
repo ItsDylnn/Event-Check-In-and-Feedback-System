@@ -19,9 +19,15 @@ function RequireAdmin({ children }) {
 }
 
 export default function App() {
+  // Check if user is logged in
+  const isLoggedIn = localStorage.getItem('token');
+
   return (
     <Routes>
-      <Route path="/login" element={<LoginRegister />} />
+      <Route 
+        path="/login" 
+        element={isLoggedIn ? <Navigate to="/events" /> : <LoginRegister />} 
+      />
       <Route
         path="/events"
         element={
@@ -48,7 +54,10 @@ export default function App() {
           </RequireAuth>
         }
       />
-      <Route path="/" element={<Navigate to="/events" />} />
+      <Route 
+        path="/" 
+        element={isLoggedIn ? <Navigate to="/events" /> : <Navigate to="/login" />} 
+      />
     </Routes>
   );
 }

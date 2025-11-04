@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
+import { clearAuth } from '../auth';
 
 export default function EventsPage() {
   const [events, setEvents] = useState([]);
@@ -8,13 +9,22 @@ export default function EventsPage() {
   const [err, setErr] = useState(null);
   const navigate = useNavigate();
 
+  // 🔹 Logout function
+  function logout() {
+    clearAuth();
+    navigate('/login');
+  }
+
   useEffect(() => {
     let mounted = true;
     api.get('/events')
       .then(res => {
         if (mounted) setEvents(res.data);
       })
-      .catch(() => setErr('Failed to load events'))
+      .catch((error) => {
+        console.error('Error loading events:', error);
+        setErr(`Failed to load events: ${error.response?.data?.message || error.message}`);
+      })
       .finally(() => setLoading(false));
 
     return () => {
@@ -27,7 +37,23 @@ export default function EventsPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Upcoming Events</h2>
+      {/* 🔹 Header with Logout */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>Upcoming Events</h2>
+        <button
+          onClick={logout}
+          style={{
+            background: '#e74c3c',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            padding: '6px 12px',
+            cursor: 'pointer'
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       {events.length === 0 && <p>No events available.</p>}
 
@@ -44,7 +70,7 @@ export default function EventsPage() {
             }}
           >
             <h3>{event.title}</h3>
-            <p><strong>Date:</strong> {event.date ? new Date(event.date).toLocaleString() : 'TBA'}</p>
+            <p><strong>Date:</strong> {event.date || 'TBA'}</p>
             <p><strong>Venue:</strong> {event.venue}</p>
             <p>{event.description}</p>
 
@@ -54,12 +80,30 @@ export default function EventsPage() {
                 localStorage.setItem(`registered_${event.id}`, 'true');
                 alert('Registered for event successfully!');
               }}
-              style={{ marginRight: 10 }}
+              style={{
+                marginRight: 10,
+                background: registered ? '#ccc' : '#3498db',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '6px 12px',
+                cursor: registered ? 'not-allowed' : 'pointer'
+              }}
             >
               {registered ? 'Registered' : 'Register'}
             </button>
 
-            <button onClick={() => navigate(`/events/${event.id}/feedback`)}>
+            <button
+              onClick={() => navigate(`/events/${event.id}/feedback`)}
+              style={{
+                background: '#2ecc71',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '6px 12px',
+                cursor: 'pointer'
+              }}
+            >
               Leave Feedback
             </button>
           </div>

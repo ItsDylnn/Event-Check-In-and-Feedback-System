@@ -18,12 +18,36 @@ class User(db.Model):
         return check_password_hash(self.password, pw)
 
 
+from datetime import datetime
+
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=False)
     date = db.Column(db.String(100), nullable=False)
     venue = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text)
+    description = db.Column(db.Text, nullable=True)
+
+    def __init__(self, title=None, date=None, venue=None, description=None):
+        if title is not None:
+            self.title = title
+        if date is not None:
+            self.date = date
+        if venue is not None:
+            self.venue = venue
+        if description is not None:
+            self.description = description
+
+    def to_dict(self):
+        """Convert event to dictionary, handling None values"""
+        data = {
+            'id': self.id,
+            'title': self.title or '',
+            'date': self.date or '',
+            'venue': self.venue or ''
+        }
+        if self.description is not None:
+            data['description'] = self.description
+        return data
 
 
 class Feedback(db.Model):

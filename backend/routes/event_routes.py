@@ -5,20 +5,47 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 event_bp = Blueprint('events', __name__)
 
 
+from flask import current_app
+
 @event_bp.route('', methods=['GET'])
-@jwt_required(optional=True)
 def get_events():
-    events = Event.query.all()
-    return jsonify([
-        {
-            'id': e.id,
-            'title': e.title,
-            'date': e.date,
-            'venue': e.venue,
-            'description': e.description
-        }
-        for e in events
-    ])
+    """Get all events without JWT requirement"""
+    try:
+        print("Attempting to get events...")  # Basic console log
+        
+        try:
+            # Try to get all events from database
+            events = Event.query.all()
+            print(f"Found {len(events) if events else 0} events in database")
+            
+            # Return empty list if no events found
+            if not events:
+                return jsonify([])
+            
+            # Convert events to list of dictionaries
+            events_data = []
+            for event in events:
+                print(f"Processing event: {event.id}")  # Log each event being processed
+                event_data = {
+                    'id': event.id,
+                    'title': event.title,
+                    'date': event.date,
+                    'venue': event.venue
+                }
+                # Only add description if it exists
+                if event.description:
+                    event_data['description'] = event.description
+                events_data.append(event_data)
+            
+            return jsonify(events_data)
+            
+        except Exception as e:
+            print(f"Database error: {str(e)}")  # Log database errors
+            return jsonify({"error": "Database error", "message": str(e)}), 500
+            
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")  # Log unexpected errors
+        return jsonify({"error": "Server error", "message": str(e)}), 500
 
 
 @event_bp.route('', methods=['POST'])
