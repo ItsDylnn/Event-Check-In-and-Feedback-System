@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
-from models import db, Event, Feedback
+from models import db, Event, Feedback, Registration
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 event_bp = Blueprint('events', __name__)
+
 
 @event_bp.route('', methods=['GET'])
 def get_events():
@@ -18,10 +19,9 @@ def get_events():
                 'id': event.id,
                 'title': event.title,
                 'date': event.date,
-                'venue': event.venue
+                'venue': event.venue,
+                'description': event.description or ''
             }
-            if event.description:
-                event_data['description'] = event.description
             events_data.append(event_data)
 
         return jsonify(events_data)
@@ -33,8 +33,9 @@ def get_events():
 @event_bp.route('', methods=['POST'])
 @jwt_required()
 def create_event():
-    user_id = get_jwt_identity()  # ✅ this is now a string
-    claims = get_jwt()            # ✅ contains role, name, etc.
+    """Admin creates a new event"""
+    user_id = get_jwt_identity()
+    claims = get_jwt()
 
     if claims.get('role') != 'admin':
         return jsonify({'msg': 'Admin only'}), 403
@@ -55,6 +56,7 @@ def create_event():
 @event_bp.route('/<int:event_id>', methods=['DELETE'])
 @jwt_required()
 def delete_event(event_id):
+    """Admin deletes an event"""
     user_id = get_jwt_identity()
     claims = get_jwt()
 
@@ -70,6 +72,7 @@ def delete_event(event_id):
 @event_bp.route('/<int:event_id>/feedback', methods=['POST'])
 @jwt_required()
 def submit_feedback(event_id):
+    """Employee submits feedback for an event"""
     user_id = get_jwt_identity()
     claims = get_jwt()
 
@@ -78,7 +81,7 @@ def submit_feedback(event_id):
 
     data = request.get_json()
     f = Feedback(
-        user_id=int(user_id),  # ✅ convert string ID back to integer
+        user_id=int(user_id),
         event_id=event_id,
         rating=data['rating'],
         comment=data.get('comment', '')
@@ -88,14 +91,13 @@ def submit_feedback(event_id):
     db.session.commit()
     return jsonify({'msg': 'Feedback submitted successfully!'}), 201
 
+
 @event_bp.route('/<int:event_id>/register', methods=['POST'])
 @jwt_required()
 def register_for_event(event_id):
     """Employee registers for an event with email and phone"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     claims = get_jwt()
-    print("JWT Claims:", claims)
-
 
     if claims.get('role') != 'employee':
         return jsonify({'msg': 'Employee only'}), 403
@@ -107,6 +109,45 @@ def register_for_event(event_id):
     if not email or not phone:
         return jsonify({'msg': 'Email and phone number required'}), 400
 
-    print(f"✅ Employee {user_id} registered for Event {event_id} | Email: {email} | Phone: {phone}")
+    # ✅ Check if already registered
+    existing = Registration.query.filter_by(user_id=user_id, event_id=event_id).first()
+    if existing:
+        return jsonify({'msg': 'You are already registered for this event'}), 400
 
-    return jsonify({'msg': 'Successfully registered for event!'}), 200
+    reg = Registration(user_id=user_id, event_id=event_id, email=email, phone=phone)
+    db.session.add(reg)
+    db.session.commit()
+
+    return jsonify({'msg': 'Successfully registered for event!'}), 201
+
+
+@event_bp.route('/<int:event_id>/unregister', methods=['DELETE'])
+@jwt_required()
+def unregister_from_event(event_id):
+    """Employee unregisters from an event"""
+    user_id = int(get_jwt_identity())
+    claims = get_jwt()
+
+    if claims.get('role') != 'employee':
+        return jsonify({'msg': 'Employee only'}), 403
+
+    registration = Registration.query.filter_by(user_id=user_id, event_id=event_id).first()
+
+    if not registration:
+        return jsonify({'msg': 'You are not registered for this event'}), 404
+
+    db.session.delete(registration)
+    db.session.commit()
+    return jsonify({'msg': 'You have been unregistered from this event'}), 200
+
+@event_bp.route('/registrations', methods=['GET'])
+@jwt_required()
+def get_user_registrations():
+    """Get list of event_ids the current user is registered for"""
+    user_id = int(get_jwt_identity())
+
+    registrations = Registration.query.filter_by(user_id=user_id).all()
+    event_ids = [r.event_id for r in registrations]
+
+    return jsonify({'registered_event_ids': event_ids}), 200
+

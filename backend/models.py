@@ -59,3 +59,14 @@ class Feedback(db.Model):
 
     user = db.relationship('User', backref='feedbacks')
     event = db.relationship('Event', backref='feedbacks')
+
+class Registration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='registrations')
+    event = db.relationship('Event', backref='registrations')
