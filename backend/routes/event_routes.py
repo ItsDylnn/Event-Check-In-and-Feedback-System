@@ -151,3 +151,37 @@ def get_user_registrations():
 
     return jsonify({'registered_event_ids': event_ids}), 200
 
+@event_bp.route('/feedback/all', methods=['GET'])
+@jwt_required()
+def get_all_feedback():
+    """Admin can see all feedback with event title and user info"""
+    claims = get_jwt()
+
+    if claims.get('role') != 'admin':
+        return jsonify({'msg': 'Admin only'}), 403
+
+    # Join Feedback with Event and User
+    from models import User  # import here to avoid circular import
+    feedback_entries = (
+        db.session.query(Feedback, Event, User)
+        .join(Event, Feedback.event_id == Event.id)
+        .join(User, Feedback.user_id == User.id)
+        .all()
+    )
+
+    feedback_data = []
+    for fb, ev, usr in feedback_entries:
+        feedback_data.append({
+            'feedback_id': fb.id,
+            'event_id': ev.id,
+            'event_title': ev.title,
+            'rating': fb.rating,
+            'comment': fb.comment,
+            'user_id': usr.id,
+            'user_name': usr.name,
+            'user_email': usr.email,
+        })
+
+    return jsonify(feedback_data), 200
+
+
