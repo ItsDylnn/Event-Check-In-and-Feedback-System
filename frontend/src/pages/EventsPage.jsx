@@ -7,6 +7,12 @@ export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+
   const navigate = useNavigate();
 
   // 🔹 Logout function
@@ -32,6 +38,32 @@ export default function EventsPage() {
     };
   }, []);
 
+  // 🔹 Handle registration popup
+  const openRegisterPopup = (event) => {
+    setSelectedEvent(event);
+    setShowPopup(true);
+  };
+
+  const handleRegisterSubmit = async () => {
+    if (!email || !phone) {
+      alert('Please enter both email and phone number.');
+      return;
+    }
+
+    try {
+      await api.post(`/events/${selectedEvent.id}/register`, { email, phone });
+      localStorage.setItem(`registered_${selectedEvent.id}`, 'true');
+      setMessage(`Registered for ${selectedEvent.title} successfully!`);
+    } catch (error) {
+      console.error('Error registering:', error);
+      alert('Failed to register for event.');
+    } finally {
+      setShowPopup(false);
+      setEmail('');
+      setPhone('');
+    }
+  };
+
   if (loading) return <div>Loading events...</div>;
   if (err) return <div style={{ color: 'red' }}>{err}</div>;
 
@@ -55,6 +87,7 @@ export default function EventsPage() {
         </button>
       </div>
 
+      {message && <p style={{ color: 'green' }}>{message}</p>}
       {events.length === 0 && <p>No events available.</p>}
 
       {events.map(event => {
@@ -76,10 +109,7 @@ export default function EventsPage() {
 
             <button
               disabled={registered}
-              onClick={() => {
-                localStorage.setItem(`registered_${event.id}`, 'true');
-                alert('Registered for event successfully!');
-              }}
+              onClick={() => openRegisterPopup(event)}
               style={{
                 marginRight: 10,
                 background: registered ? '#ccc' : '#3498db',
@@ -109,6 +139,81 @@ export default function EventsPage() {
           </div>
         );
       })}
+
+      {/* 🔹 Popup Modal */}
+      {showPopup && selectedEvent && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 8,
+            padding: 20,
+            width: 300,
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          }}>
+            <h3>Register for {selectedEvent.title}</h3>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                margin: '10px 0',
+                padding: 8,
+                borderRadius: 6,
+                border: '1px solid #ccc'
+              }}
+            />
+            <input
+              type="tel"
+              placeholder="Enter your phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              style={{
+                width: '100%',
+                marginBottom: 10,
+                padding: 8,
+                borderRadius: 6,
+                border: '1px solid #ccc'
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                onClick={() => setShowPopup(false)}
+                style={{
+                  background: '#ccc',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '6px 12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRegisterSubmit}
+                style={{
+                  background: '#3498db',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '6px 12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

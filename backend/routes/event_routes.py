@@ -87,3 +87,26 @@ def submit_feedback(event_id):
     db.session.add(f)
     db.session.commit()
     return jsonify({'msg': 'Feedback submitted successfully!'}), 201
+
+@event_bp.route('/<int:event_id>/register', methods=['POST'])
+@jwt_required()
+def register_for_event(event_id):
+    """Employee registers for an event with email and phone"""
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    print("JWT Claims:", claims)
+
+
+    if claims.get('role') != 'employee':
+        return jsonify({'msg': 'Employee only'}), 403
+
+    data = request.get_json()
+    email = data.get('email')
+    phone = data.get('phone')
+
+    if not email or not phone:
+        return jsonify({'msg': 'Email and phone number required'}), 400
+
+    print(f"✅ Employee {user_id} registered for Event {event_id} | Email: {email} | Phone: {phone}")
+
+    return jsonify({'msg': 'Successfully registered for event!'}), 200
