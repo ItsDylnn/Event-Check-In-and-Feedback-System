@@ -7,6 +7,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import AdminPage from './pages/AdminPage';
 import { getRole } from './auth';
 import AdminFeedbackPage from './pages/AdminFeedbackPage';
+import MyFeedbackPage from "./pages/MyFeedbackPage";
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem('token');
@@ -47,6 +48,16 @@ export default function App() {
         element={
           <RequireAuth>
             <FeedbackPage />
+          </RequireAuth>
+        }
+      />
+
+      {/* 🔹 My Feedback (Employee) */}
+      <Route
+        path="/my-feedback"
+        element={
+          <RequireAuth>
+            <MyFeedbackPage />
           </RequireAuth>
         }
       />

@@ -21,6 +21,11 @@ export default function EventsPage() {
     navigate("/login");
   }
 
+  // ✅ Go to "My Feedback"
+  function goToMyFeedback() {
+    navigate("/my-feedback");
+  }
+
   // ✅ Load events + registrations
   useEffect(() => {
     async function loadData() {
@@ -86,10 +91,15 @@ export default function EventsPage() {
     <div className="events-page">
       {/* 🔹 Header */}
       <div className="events-header">
-        <h2>Upcoming Events</h2>
-        <button onClick={logout} className="btn btn-logout">
-          Logout
-        </button>
+        <h2 className="page-title">Upcoming Events</h2>
+        <div className="header-buttons">
+          <button onClick={goToMyFeedback} className="btn btn-feedback">
+            My Feedback
+          </button>
+          <button onClick={logout} className="btn btn-logout">
+            Logout
+          </button>
+        </div>
       </div>
 
       {events.length === 0 && <p className="empty">No events available.</p>}
@@ -118,7 +128,7 @@ export default function EventsPage() {
               )}
 
               <button
-                className="btn btn-feedback"
+                className="btn btn-blue"
                 onClick={() => navigate(`/events/${event.id}/feedback`)}
               >
                 Leave Feedback
