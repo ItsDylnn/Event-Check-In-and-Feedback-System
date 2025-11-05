@@ -1,3 +1,4 @@
+import './styles.css';
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginRegister from './pages/LoginRegister';
