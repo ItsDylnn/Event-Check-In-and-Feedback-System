@@ -1,7 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from models import db
 from config import Config
 from routes.auth_routes import auth_bp
@@ -18,25 +18,43 @@ def create_app():
     db.init_app(app)
     JWTManager(app)
 
-    # ✅ Apply CORS globally (Render-friendly)
+    # ✅ Allow both localhost and your deployed frontend
     CORS(
         app,
-        resources={r"/*": {"origins": "*"}},  # Allow all origins temporarily
+        origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "https://boisterous-entremet-58dbc6.netlify.app",
+        ],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
-        expose_headers=["Content-Type", "Authorization"]
+        expose_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
 
-    # ✅ Register blueprints AFTER enabling CORS
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(event_bp, url_prefix='/events')
-    app.register_blueprint(feedback_bp, url_prefix='/feedback')
+    # ✅ Register routes after CORS
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(event_bp, url_prefix="/events")
+    app.register_blueprint(feedback_bp, url_prefix="/feedback")
 
-    @app.route('/')
+    @app.route("/")
+    @cross_origin()
     def index():
         return jsonify({"message": "Event API running"})
 
-    # ✅ Global error handlers
+    # ✅ Explicitly handle OPTIONS preflight requests
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            response = app.make_default_options_response()
+            headers = response.headers
+            headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+            headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            headers["Access-Control-Allow-Credentials"] = "true"
+            return response
+
+    # ✅ Error handlers
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({"error": "Bad Request", "message": str(error)}), 400
@@ -52,10 +70,10 @@ def create_app():
     return app
 
 
-# ✅ Expose app for Render (Gunicorn)
+# ✅ Expose for Render (Gunicorn)
 app = create_app()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
