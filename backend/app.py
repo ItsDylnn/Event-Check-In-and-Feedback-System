@@ -24,7 +24,7 @@ def create_app():
         resources={r"/*": {"origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://boisterous-entremet-58dbc6.netlify.app"  # ✅ your Netlify frontend
+            "https://boisterous-entremet-58dbc6.netlify.app"  # ✅ Your deployed Netlify site
         ]}},
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
