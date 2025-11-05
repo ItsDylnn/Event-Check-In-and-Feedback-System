@@ -18,20 +18,16 @@ def create_app():
     db.init_app(app)
     JWTManager(app)
 
-    # ✅ Apply CORS BEFORE registering blueprints
-    cors = CORS(
+    # ✅ Apply CORS globally (Render-friendly)
+    CORS(
         app,
-        resources={r"/*": {"origins": [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://boisterous-entremet-58dbc6.netlify.app"  # ✅ Your deployed Netlify site
-        ]}},
+        resources={r"/*": {"origins": "*"}},  # Allow all origins temporarily
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type", "Authorization"]
     )
 
-    # ✅ Register all blueprints AFTER CORS is set up
+    # ✅ Register blueprints AFTER enabling CORS
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(event_bp, url_prefix='/events')
     app.register_blueprint(feedback_bp, url_prefix='/feedback')
