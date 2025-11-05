@@ -21,7 +21,11 @@ def create_app():
     # ✅ Apply CORS BEFORE registering blueprints
     cors = CORS(
         app,
-        resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://your-frontend-url.netlify.app"]}},
+        resources={r"/*": {"origins": [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "https://boisterous-entremet-58dbc6.netlify.app"  # ✅ your Netlify frontend
+        ]}},
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type", "Authorization"]
@@ -52,7 +56,7 @@ def create_app():
     return app
 
 
-# ✅ Expose app for Gunicorn/Render
+# ✅ Expose app for Render (Gunicorn)
 app = create_app()
 
 if __name__ == '__main__':
