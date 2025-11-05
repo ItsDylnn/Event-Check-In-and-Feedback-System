@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from models import db
 from config import Config
 from routes.auth_routes import auth_bp
@@ -18,43 +18,50 @@ def create_app():
     db.init_app(app)
     JWTManager(app)
 
-    # ✅ Allow both localhost and your deployed frontend
+    # ✅ Apply CORS to all routes and origins explicitly
     CORS(
         app,
-        origins=[
+        resources={r"/*": {"origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://boisterous-entremet-58dbc6.netlify.app",
-        ],
+            "https://boisterous-entremet-58dbc6.netlify.app"  # your Netlify frontend
+        ]}},
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
 
-    # ✅ Register routes after CORS
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(event_bp, url_prefix="/events")
-    app.register_blueprint(feedback_bp, url_prefix="/feedback")
+    # ✅ Register blueprints AFTER CORS setup
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(event_bp, url_prefix='/events')
+    app.register_blueprint(feedback_bp, url_prefix='/feedback')
 
-    @app.route("/")
-    @cross_origin()
+    @app.route('/')
     def index():
         return jsonify({"message": "Event API running"})
 
-    # ✅ Explicitly handle OPTIONS preflight requests
+    # ✅ Handle preflight requests globally
     @app.before_request
     def handle_preflight():
         if request.method == "OPTIONS":
             response = app.make_default_options_response()
             headers = response.headers
-            headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+            origin = request.headers.get("Origin", "")
+            if origin in [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "https://boisterous-entremet-58dbc6.netlify.app"
+            ]:
+                headers["Access-Control-Allow-Origin"] = origin
+            else:
+                headers["Access-Control-Allow-Origin"] = "https://boisterous-entremet-58dbc6.netlify.app"
             headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
             headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
             headers["Access-Control-Allow-Credentials"] = "true"
             return response
 
-    # ✅ Error handlers
+    # ✅ Global error handlers
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({"error": "Bad Request", "message": str(error)}), 400
@@ -70,7 +77,7 @@ def create_app():
     return app
 
 
-# ✅ Expose for Render (Gunicorn)
+# ✅ Expose app for Render (Gunicorn)
 app = create_app()
 
 if __name__ == "__main__":
