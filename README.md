@@ -21,7 +21,7 @@ This system allows admins to create and manage events, employees to register and
 
 ## 🧩 Tech Stack
 
-**Frontend:** React (Vite), Axios, TailwindCSS  
+**Frontend:** React (Vite), Axios, Standard CSS  
 **Backend:** Flask, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-CORS  
 **Database:** SQLite (development)  
 **Deployment:** Render (backend) + Netlify (frontend)
@@ -54,7 +54,7 @@ python create_users.py
 
 ### 4️⃣ Run the Flask Server
 ```bash
-python app.py
+flask run
 ```
 Server should start at: **http://127.0.0.1:5000**
 
@@ -88,18 +88,43 @@ Frontend will run at: **http://localhost:3000**
 ## 📁 Project Structure
 
 ```
-event-checkin-system/
+EVENT-CHECK-IN-AND-FEEDBACK/
 ├── backend/
-│   ├── app.py
-│   ├── models.py
 │   ├── routes/
+│   │   ├── auth_routes.py
+│   │   ├── event_routes.py
+│   │   └── feedback_routes.py
+│   ├── app.py
 │   ├── config.py
+│   ├── create_test_event.py
 │   ├── create_users.py
-│   └── requirements.txt
-└── frontend/
-    ├── src/
-    ├── package.json
-    └── vite.config.js
+│   ├── init_db.py
+│   ├── models.py
+│   ├── requirements.txt
+│   └── Procfile
+│
+├── frontend/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── AdminFeedbackPage.jsx
+│   │   │   ├── AdminPage.jsx
+│   │   │   ├── EventsPage.jsx
+│   │   │   ├── FeedbackPage.jsx
+│   │   │   ├── LoginRegister.jsx
+│   │   │   └── MyFeedbackPage.jsx
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   ├── auth.js
+│   │   ├── index.js
+│   │   └── styles.css
+├── .env
+├── package-lock.json
+├── package.json
+├── .gitignore
+└── README.md
+
 ```
 
 ---
